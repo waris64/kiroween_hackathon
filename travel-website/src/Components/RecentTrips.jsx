@@ -3,7 +3,7 @@ import Malaysia  from '/src/assets/Malaysia.jpg'
 import france  from '/src/assets/France.jpg'
 const RecentTrips = (props) =>{
     return(
-        <div>
+        <div className='md:pt-24 pt-20'>
             <h1 className='text-center text-4xl pt-10 font-bold pt-4 '>Recent Trips</h1>
             <p className='text-center text-2xl '>You can discover unique destinations using Google Maps.</p>
             <div className='multiple-destinations flex flex-col md:flex-row pt-10 gap-x-5 '>

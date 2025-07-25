@@ -5,7 +5,7 @@ const About =()=>{
 return (
     <main>
         <Navbar/>
-        <Hero heroImg="/assets/night.jpg" title="About Us"  />
+       <Hero heroImg="/src/assets/night.jpg" title="About Us" />
         
     </main>
 )
