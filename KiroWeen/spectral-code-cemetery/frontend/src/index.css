@@ -1,0 +1,104 @@
+@import url('https://fonts.googleapis.com/css2?family=Creepster&family=Nosifer&family=Roboto:wght@300;400;500;700&family=Roboto+Mono:wght@400;500&family=Shadows+Into+Light&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    @apply box-border;
+  }
+
+  html, body, #root {
+    @apply h-full w-full m-0 p-0;
+  }
+
+  body {
+    @apply bg-primary-900 text-accent-bone;
+    font-family: 'Roboto', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-creepster;
+  }
+
+  code {
+    @apply font-code;
+  }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    @apply w-2;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-primary-800;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-primary-500 rounded-full;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-primary-400;
+  }
+}
+
+@layer components {
+  /* Reusable component classes following Halloween theme */
+  .ghost-button {
+    @apply bg-primary-700 bg-opacity-60 text-accent-bone border border-secondary-500 
+           px-6 py-3 rounded-lg font-semibold cursor-pointer relative overflow-hidden
+           transition-all duration-300 hover:border-secondary-500 hover:shadow-ghost hover:-translate-y-0.5;
+  }
+
+  .ghost-button::before {
+    content: '';
+    @apply absolute top-0 -left-full w-full h-full bg-gradient-to-r 
+           from-transparent via-secondary-500/30 to-transparent
+           transition-all duration-500;
+  }
+
+  .ghost-button:hover::before {
+    @apply left-full;
+  }
+
+  .tombstone-card {
+    @apply bg-gradient-to-br from-primary-800 via-primary-700 to-primary-900 
+           border-2 border-secondary-500/50
+           rounded-lg shadow-lg transition-all duration-300
+           hover:-translate-y-2 hover:scale-105 hover:shadow-ghost hover:border-secondary-500;
+  }
+
+  .spooky-card {
+    @apply bg-primary-800/80 backdrop-blur-md border border-secondary-500/30
+           rounded-2xl p-6 shadow-xl hover:border-secondary-500/50 transition-all duration-300;
+  }
+
+  .haunted-input {
+    @apply bg-primary-900 bg-opacity-80 border border-primary-600 text-accent-bone
+           px-4 py-3 rounded-lg font-code transition-all duration-300
+           focus:outline-none focus:border-primary-400 focus:ring-4 focus:ring-primary-500/30;
+  }
+
+  .haunted-input::placeholder {
+    @apply text-accent-bone/50 italic;
+  }
+
+  .loading-spinner {
+    @apply inline-block w-8 h-8 border-4 border-primary-500 border-t-secondary-500
+           rounded-full animate-spin;
+  }
+}
+
+@layer utilities {
+  .text-shadow-glow {
+    text-shadow: 0 0 10px rgba(112, 0, 255, 0.8);
+  }
+
+  .text-shadow-ghost {
+    text-shadow: 0 0 15px rgba(0, 255, 136, 0.6);
+  }
+}

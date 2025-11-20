@@ -1,0 +1,106 @@
+{
+  "name": "GitHub Integration",
+  "description": "MCP server for GitHub repository integration",
+  "version": "1.0.0",
+  "type": "github",
+  "enabled": false,
+  
+  "config": {
+    "repository": {
+      "owner": "your-username",
+      "repo": "spectral-code-cemetery",
+      "branch": "main"
+    },
+    
+    "authentication": {
+      "type": "token",
+      "tokenEnvVar": "GITHUB_TOKEN"
+    },
+    
+    "features": {
+      "issues": {
+        "enabled": true,
+        "autoLabel": true,
+        "labels": ["bug", "enhancement", "documentation"]
+      },
+      
+      "pullRequests": {
+        "enabled": true,
+        "autoReview": false,
+        "requireApproval": true
+      },
+      
+      "commits": {
+        "enabled": true,
+        "conventionalCommits": true,
+        "signCommits": false
+      },
+      
+      "releases": {
+        "enabled": true,
+        "autoTag": true,
+        "generateChangelog": true
+      }
+    },
+    
+    "webhooks": {
+      "enabled": false,
+      "events": [
+        "push",
+        "pull_request",
+        "issues",
+        "release"
+      ],
+      "endpoint": "http://localhost:3000/webhooks/github"
+    },
+    
+    "notifications": {
+      "enabled": true,
+      "channels": ["ide", "email"],
+      "events": {
+        "pr_opened": true,
+        "pr_merged": true,
+        "issue_created": true,
+        "release_published": true
+      }
+    }
+  },
+  
+  "commands": {
+    "createIssue": {
+      "description": "Create a new GitHub issue",
+      "parameters": ["title", "body", "labels"]
+    },
+    
+    "createPR": {
+      "description": "Create a new pull request",
+      "parameters": ["title", "body", "base", "head"]
+    },
+    
+    "listIssues": {
+      "description": "List repository issues",
+      "parameters": ["state", "labels", "assignee"]
+    },
+    
+    "getCommits": {
+      "description": "Get recent commits",
+      "parameters": ["branch", "limit"]
+    }
+  },
+  
+  "setup": {
+    "instructions": [
+      "1. Create a GitHub Personal Access Token at https://github.com/settings/tokens",
+      "2. Add token to .env file as GITHUB_TOKEN=your_token_here",
+      "3. Update repository owner and name in this config",
+      "4. Set enabled to true",
+      "5. Restart Kiro to activate the integration"
+    ],
+    
+    "requiredScopes": [
+      "repo",
+      "read:user",
+      "write:repo_hook"
+    ]
+  }
+}
