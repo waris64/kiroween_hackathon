@@ -34,6 +34,7 @@ class GitAnalyzer {
     this.config = {
       maxCommits: 1000,
       timeout: 30000,
+      cloneTimeout: 600000, // 10 minutes for large repos
       cacheRepositoryTTL: 300, // 5 minutes
       cacheFileHistoryTTL: 600, // 10 minutes
       ...config,
@@ -59,7 +60,10 @@ class GitAnalyzer {
    * @throws {RepositoryError} If repository is invalid or inaccessible
    */
   async analyzeRepository(repositoryUrl, branch = 'main', options = {}) {
-    const cacheKey = `repo:${repositoryUrl}:${branch}`
+    // Sanitize URL: remove query parameters and hash fragments
+    const cleanUrl = repositoryUrl.split('?')[0].split('#')[0]
+    
+    const cacheKey = `repo:${cleanUrl}:${branch}`
     
     // Check cache first
     const cached = this.repositoryCache.get(cacheKey)
@@ -68,17 +72,17 @@ class GitAnalyzer {
       return cached
     }
 
-    const repoName = this.extractRepoName(repositoryUrl)
+    const repoName = this.extractRepoName(cleanUrl)
     const repoPath = path.join(this.tempDir, `${repoName}-${Date.now()}`)
 
     try {
-      logger.info(`[TOMB] Starting analysis of repository: ${repositoryUrl}`)
+      logger.info(`[TOMB] Starting analysis of repository: ${cleanUrl}`)
 
       // Ensure temp directory exists
       await fs.mkdir(this.tempDir, { recursive: true })
 
-      // Clone the repository
-      await this.cloneRepository(repositoryUrl, repoPath, branch)
+      // Clone the repository (use cleaned URL)
+      await this.cloneRepository(cleanUrl, repoPath, branch)
 
       // Validate repository has commits
       const git = simpleGit(repoPath)
@@ -97,7 +101,7 @@ class GitAnalyzer {
 
       const result = {
         repository: {
-          url: repositoryUrl,
+          url: cleanUrl,
           name: repoName,
           branch,
           analyzedAt: new Date().toISOString()
@@ -399,16 +403,64 @@ class GitAnalyzer {
     try {
       logger.info(`[TOMB] Cloning repository to ${repoPath}`)
       
-      const git = simpleGit()
-      await git.clone(repositoryUrl, repoPath, ['--depth', '1000', '--branch', branch])
+      // Configure git with better timeout and buffer settings
+      const git = simpleGit({
+        timeout: {
+          block: this.config.cloneTimeout, // 10 minutes for large repos
+        },
+        config: [
+          'http.postBuffer=524288000',
+          'http.lowSpeedLimit=0',
+          'http.lowSpeedTime=999999',
+          'core.preloadindex=true',
+          'core.fscache=true',
+          'gc.auto=0',
+          'core.longpaths=true', // Enable long paths on Windows
+          'core.autocrlf=false'  // Prevent line ending issues
+        ]
+      })
       
-      logger.info('[TOMB] Repository cloned successfully')
+      // Try with specified branch first
+      try {
+        await git.clone(repositoryUrl, repoPath, [
+          '--depth', '50', // Reduced from 100 for faster cloning
+          '--branch', branch,
+          '--single-branch',
+          '--no-tags',
+          '--filter=blob:none' // Blobless clone for speed
+        ])
+        logger.info('[TOMB] Repository cloned successfully')
+        return
+      } catch (branchError) {
+        // If branch not found, try without branch specification (uses default)
+        if (branchError.message.includes('not found') || branchError.message.includes('Remote branch')) {
+          logger.info(`[TOMB] Branch '${branch}' not found, trying default branch`)
+          await git.clone(repositoryUrl, repoPath, [
+            '--depth', '50', // Reduced from 100 for faster cloning
+            '--single-branch',
+            '--no-tags',
+            '--filter=blob:none'
+          ])
+          logger.info('[TOMB] Repository cloned successfully with default branch')
+          return
+        }
+        throw branchError
+      }
     } catch (error) {
-      if (error.message.includes('not found')) {
-        throw new RepositoryError('Repository not found or branch does not exist')
+      logger.error(`[TOMB] Clone error details: ${JSON.stringify({
+        message: error.message,
+        code: error.code,
+        signal: error.signal
+      })}`)
+      
+      if (error.message.includes('not found') && !error.message.includes('Remote branch')) {
+        throw new RepositoryError('Repository not found or inaccessible')
       }
       if (error.message.includes('Authentication') || error.message.includes('authentication')) {
         throw new RepositoryError('Private repositories are not supported')
+      }
+      if (error.message.includes('Empty reply') || error.message.includes('Connection reset')) {
+        throw new RepositoryError('Network connection issue - please try again')
       }
       throw new RepositoryError(`Failed to clone repository: ${error.message}`)
     }
@@ -456,7 +508,7 @@ class GitAnalyzer {
       const fileList = allFiles.trim().split('\n').filter(f => f)
 
       const filesData = await Promise.all(
-        fileList.slice(0, 500).map(async (filePath) => {
+        fileList.slice(0, 100).map(async (filePath) => {
           try {
             // Get commit count for this file
             const log = await git.log({ file: filePath })
@@ -678,11 +730,20 @@ class GitAnalyzer {
    * Extract repository name from URL
    * 
    * @param {string} url - Repository URL
-   * @returns {string} Repository name
+   * @returns {string} Repository name (sanitized for filesystem)
    */
   extractRepoName(url) {
-    const match = url.match(/\/([^\/]+)\.git$/) || url.match(/\/([^\/]+)\/?$/)
-    return match ? match[1] : 'unknown-repo'
+    // Remove query parameters and hash fragments
+    const cleanUrl = url.split('?')[0].split('#')[0]
+    
+    // Extract repo name
+    const match = cleanUrl.match(/\/([^\/]+)\.git$/) || cleanUrl.match(/\/([^\/]+)\/?$/)
+    let repoName = match ? match[1] : 'unknown-repo'
+    
+    // Sanitize for filesystem (remove invalid characters for Windows/Unix)
+    repoName = repoName.replace(/[<>:"|?*]/g, '-')
+    
+    return repoName
   }
 
   /**

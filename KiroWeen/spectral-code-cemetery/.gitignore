@@ -7,3 +7,16 @@ build
 coverage
 .vscode
 .idea
+
+# Temporary files and directories
+temp/
+tmp/
+*.tmp
+
+# Backend temporary repositories
+backend/temp/
+backend/logs/
+
+# Frontend build artifacts
+frontend/dist/
+frontend/build/

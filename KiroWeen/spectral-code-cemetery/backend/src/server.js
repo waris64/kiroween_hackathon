@@ -12,18 +12,19 @@
  * @module server
  */
 
+// IMPORTANT: Load environment variables FIRST before any other imports
+import './env-loader.js'
+
 import express from 'express'
 import cors from 'cors'
 import helmet from 'helmet'
 import morgan from 'morgan'
-import dotenv from 'dotenv'
 import rateLimit from 'express-rate-limit'
 import apiRoutes from './routes/index.js'
 import { errorHandler, notFoundHandler } from './middleware/errorHandler.js'
 import logger from './utils/logger.js'
 
-// Load environment variables
-dotenv.config()
+
 
 // Validate required environment variables
 const requiredEnvVars = ['NODE_ENV']
@@ -188,6 +189,9 @@ const server = app.listen(PORT, () => {
   console.log(`📊 Environment: ${NODE_ENV}`)
   console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`)
 })
+
+// Set server timeout to 15 minutes for large repositories
+server.timeout = 900000 // 15 minutes (for repos like React)
 
 /**
  * Graceful Shutdown Handler

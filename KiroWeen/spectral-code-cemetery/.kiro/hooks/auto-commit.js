@@ -15,6 +15,10 @@ export default {
   // Only trigger for these file patterns
   filePattern: [
     '**/*.md',           // Documentation files
+    '**/*.js',           // JavaScript files
+    '**/*.jsx',          // React files
+    '**/*.ts',           // TypeScript files
+    '**/*.tsx',          // TypeScript React files
     '**/package.json',   // Dependency changes
     '**/.env.example',   // Environment templates
   ],
@@ -35,13 +39,13 @@ export default {
   command: 'git add ${file} && git commit -m "chore: auto-commit ${fileName}"',
   
   // Confirmation before running
-  confirmBeforeRun: true,
+  confirmBeforeRun: false,
   
   // Show notification on completion
   showNotification: true,
   
   // Enabled by default
-  enabled: false, // Set to true to enable
+  enabled: true, // Set to true to enable
   
   // Configuration
   config: {

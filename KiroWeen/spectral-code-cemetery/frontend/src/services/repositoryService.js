@@ -12,7 +12,17 @@ const repositoryService = {
   async analyzeRepository(repoUrl) {
     try {
       const response = await api.post('/analyze', { repoUrl })
-      return response.data
+      console.log('[REPOSITORY SERVICE] Raw response:', response)
+      console.log('[REPOSITORY SERVICE] Response data:', response.data)
+      
+      // API returns { success: true, data: repositoryData }
+      // We want to return the actual repository data
+      if (response.success && response.data) {
+        return response.data
+      }
+      
+      // Fallback for different response structure
+      return response.data || response
     } catch (error) {
       console.error('[CEMETERY] Repository analysis failed:', error)
       throw error

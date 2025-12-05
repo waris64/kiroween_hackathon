@@ -1,19 +1,27 @@
-import React, { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { GitBranch, Skull, Code, Clock, Sparkles } from 'lucide-react'
 import GhostButton from '../components/Buttons/GhostButton'
-import ErrorMessage from '../components/Error/ErrorMessage'
+import ErrorModal from '../components/Modal/ErrorModal'
 import { useSpectralData } from '../hooks/useSpectralData'
 import GhostParticles from '../components/Effects/GhostParticles'
+import { useSpectral } from '../context/SpectralContext'
 
 /**
  * Landing page
  */
 function Landing() {
   const [repoUrl, setRepoUrl] = useState('')
+  const [showErrorModal, setShowErrorModal] = useState(false)
   const { analyzeRepo, isAnalyzingRepo, error } = useSpectralData()
+  const { actions } = useSpectral()
   const navigate = useNavigate()
+
+  // Clear state when landing page mounts
+  useEffect(() => {
+    actions.resetState()
+  }, [])
 
   const handleAnalyze = async () => {
     if (!repoUrl.trim()) return
@@ -23,6 +31,7 @@ function Landing() {
       navigate('/cemetery')
     } catch (err) {
       console.error('Analysis failed:', err)
+      setShowErrorModal(true)
     }
   }
 
@@ -134,30 +143,9 @@ function Landing() {
               </div>
             </form>
 
-            {error && (
-              <div className="mt-4">
-                <ErrorMessage message={error} />
-              </div>
-            )}
-
             <p className="mt-4 text-sm text-accent-bone/60">
               Example: https://github.com/facebook/react
             </p>
-
-            {/* Sound Test Button */}
-            <button
-              onClick={() => {
-                console.log('[TEST] Testing sound directly...')
-                const audio = new Audio('/assets/sounds/whoosh.mp3')
-                audio.volume = 0.5
-                audio.play()
-                  .then(() => console.log('[TEST] Sound played successfully!'))
-                  .catch(err => console.error('[TEST] Sound failed:', err))
-              }}
-              className="mt-4 px-4 py-2 bg-secondary-500/20 border border-secondary-500 rounded text-secondary-500 text-sm hover:bg-secondary-500/30"
-            >
-              🔊 Test Sound
-            </button>
           </div>
         </motion.div>
 
@@ -251,6 +239,14 @@ function Landing() {
           </div>
         </motion.div>
       </div>
+
+      {/* Error Modal */}
+      <ErrorModal
+        isOpen={showErrorModal}
+        onClose={() => setShowErrorModal(false)}
+        error={error}
+        title="Repository Analysis Failed"
+      />
     </div>
   )
 }
