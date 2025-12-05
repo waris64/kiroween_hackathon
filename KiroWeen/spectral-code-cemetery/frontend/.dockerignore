@@ -1,0 +1,45 @@
+# Dependencies
+node_modules
+npm-debug.log
+yarn-error.log
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Build output
+dist
+build
+
+# Testing
+coverage
+*.test.js
+*.test.jsx
+tests
+
+# Logs
+*.log
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Git
+.git
+.gitignore
+
+# Documentation
+*.md
+!README.md
+
+# Development
+.eslintrc
+.prettierrc
+vite.config.js.timestamp-*
